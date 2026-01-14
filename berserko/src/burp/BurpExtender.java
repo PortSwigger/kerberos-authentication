@@ -166,8 +166,10 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 
 		for (Frame f : Frame.getFrames()) {
 			if (f.isVisible() && f.getTitle().contains("Burp Suite")) {
+				// Don't break to handle when both the loading window and project windows are still open
+				// This assumes the project window will always be after the loading windows when
+				// Frame.getFrames() returns
 				burpWindow = f;
-				break;
 			}
 		}
 
