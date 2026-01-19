@@ -2,12 +2,12 @@ Uuid: 94135ed444c84cc095c72e6520bcc583
 ExtensionType: 1
 Name: Kerberos Authentication
 RepoName: kerberos-authentication
-ScreenVersion: 1.0
-SerialVersion: 3
+ScreenVersion: 1.0.1
+SerialVersion: 4
 MinPlatformVersion: 0
 ProOnly: False
 Author: Richard Turnbull, NCC Group
 ShortDescription: Adds support for performing Kerberos authentication.
-EntryPoint: build/libs/kerberos-authentication-all.jar
+EntryPoint: target_repo-all.jar
 BuildCommand: ./gradlew fatJar
 SupportedProducts: Pro, Community
