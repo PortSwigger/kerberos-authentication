@@ -15,6 +15,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -143,6 +144,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 	private String krb5File;
 	// end config
 
+	private Component burpWindow;
+
 	private Object contextLock = new Object();
 
 	public void registerExtenderCallbacks(IBurpExtenderCallbacks callbacks) {
@@ -160,6 +163,15 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 		callbacks.registerHttpListener(this);
 
 		callbacks.registerExtensionStateListener(this);
+
+		for (Frame f : Frame.getFrames()) {
+			if (f.isVisible() && f.getTitle().contains("Burp Suite")) {
+				// Don't break to handle when both the loading window and project windows are still open
+				// This assumes the project window will always be after the loading windows when
+				// Frame.getFrames() returns
+				burpWindow = f;
+			}
+		}
 
 		if (savedConfigAvailable()) {
 			loadConfig();
@@ -2607,7 +2619,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 							{
 								JOptionPane
 								.showMessageDialog(
-										null,
+										burpWindow,
 										"Not a valid hostname expression",
 										"Error", JOptionPane.ERROR_MESSAGE);
 							}
@@ -2623,7 +2635,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 								{
 									JOptionPane
 									.showMessageDialog(
-											null,
+											burpWindow,
 											"Already present in list",
 											"Error", JOptionPane.ERROR_MESSAGE);
 									return;
@@ -2651,7 +2663,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 								{
 									JOptionPane
 									.showMessageDialog(
-											null,
+											burpWindow,
 											"Not a valid hostname expression",
 											"Error", JOptionPane.ERROR_MESSAGE);
 								}
@@ -2667,7 +2679,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 									{
 										JOptionPane
 										.showMessageDialog(
-												null,
+												burpWindow,
 												"Already present in list",
 												"Error", JOptionPane.ERROR_MESSAGE);
 										return;
@@ -2747,7 +2759,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 								writer.println("\tforwardable = true");
 								writer.close();
 							} catch (FileNotFoundException ee) {
-								JOptionPane.showMessageDialog(null, String
+								JOptionPane.showMessageDialog(burpWindow, String
 										.format("Could not write to file %s\n",
 												f), "Error",
 										JOptionPane.ERROR_MESSAGE);
@@ -2784,7 +2796,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 
 							if (!result) {
 								int n = JOptionPane.showConfirmDialog(
-										null,
+										burpWindow,
 										String.format(
 												"This Kerberos config file does not have \"forwardable=true\" set in it - delegation won't currently work.\n\nContinue?",
 												krb5File), "Error",
@@ -2811,7 +2823,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 				clearStateButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						int n = JOptionPane.showConfirmDialog(
-								null,
+								burpWindow,
 								"Are you sure you want to clear the current Kerberos state (tickets, cached SPN mappings, etc.)?\n\nThere is usually no need to do this unless changes have been made on the server side and you want to start from a clean state.", "Clear Kerberos state",
 								JOptionPane.YES_NO_OPTION);
 
@@ -2867,7 +2879,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 		if (krb5File.isEmpty()) {
 			JOptionPane
 					.showMessageDialog(
-							null,
+							burpWindow,
 							"No krb5.conf file has been specified yet - delegation won't currently work.\n\nUse the \"Change\" button to specify a file, or \"Create krb5.conf file\" to create a new one.",
 							"Error", JOptionPane.ERROR_MESSAGE);
 		} else {
@@ -2877,7 +2889,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 				if (result) {
 					JOptionPane
 							.showMessageDialog(
-									null,
+									burpWindow,
 									String.format(
 											"krb5.conf file found at %s, and \"forwardable=true\" set - delegation should work",
 											krb5File), "Success",
@@ -2885,7 +2897,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 				} else {
 					JOptionPane
 							.showMessageDialog(
-									null,
+									burpWindow,
 									String.format(
 											"krb5.conf file found at %s, but \"forwardable=true\" not set in it - delegation won't currently work.\n\nTry editing the file, or creating a new one.",
 											krb5File), "Error",
@@ -2894,7 +2906,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 			} else {
 				JOptionPane
 						.showMessageDialog(
-								null,
+								burpWindow,
 								String.format(
 										"Can't find krb5.conf file %s - delegation won't currently work.",
 										krb5File), "Error",
@@ -3010,13 +3022,13 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 					|| username.isEmpty()) {
 				JOptionPane
 						.showMessageDialog(
-								null,
+								burpWindow,
 								"Domain DNS Name, KDC Host, Username and (probably) Password must all be set, and ideally tested, before Kerberos authentication will work",
 								"Warning", JOptionPane.WARNING_MESSAGE);
 			} else if (password.isEmpty()) {
 				JOptionPane
 						.showMessageDialog(
-								null,
+								burpWindow,
 								"Password is not set - probably because it wasn't saved in the extension settings.\n\nYou need to set it (unless the account has a blank password of course).",
 								"Warning", JOptionPane.WARNING_MESSAGE);
 			}
@@ -3031,7 +3043,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 		{
 			JOptionPane
 			.showMessageDialog(
-					null,
+					burpWindow,
 					"It is not recommended to set all hosts in scope in combination with the 'Proactive' strategy, as this may lead to lots of spurious Kerberos traffic (and possible privacy issues).\n\nIt is suggested to use 'Proactive after 401' instead.",
 					"Warning", JOptionPane.WARNING_MESSAGE);
 		}
@@ -3045,11 +3057,11 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 		final JComponent[] inputs = new JComponent[] {
 				new JLabel("Domain DNS Name"), newDomainDnsNameTextField,
 				new JLabel("KDC Host"), newKdcTextField, };
-		JOptionPane.showMessageDialog(null, inputs, "Change domain settings",
+		JOptionPane.showMessageDialog(burpWindow, inputs, "Change domain settings",
 				JOptionPane.PLAIN_MESSAGE);
 
 		if (newDomainDnsNameTextField.getText().endsWith(".")) {
-			JOptionPane.showMessageDialog(null,
+			JOptionPane.showMessageDialog(burpWindow,
 					"Removing dot from end of DNS domain name", "Info",
 					JOptionPane.INFORMATION_MESSAGE);
 			newDomainDnsNameTextField.setText(newDomainDnsNameTextField
@@ -3057,7 +3069,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 							newDomainDnsNameTextField.getText().length() - 1));
 		}
 		if (newKdcTextField.getText().endsWith(".")) {
-			JOptionPane.showMessageDialog(null,
+			JOptionPane.showMessageDialog(burpWindow,
 					"Removing dot from end of KDC hostname", "Info",
 					JOptionPane.INFORMATION_MESSAGE);
 			newKdcTextField.setText(newKdcTextField.getText().substring(0,
@@ -3067,14 +3079,14 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 		if (!checkHostnameRegexp(newDomainDnsNameTextField.getText())) {
 			JOptionPane
 					.showMessageDialog(
-							null,
+							burpWindow,
 							"DNS domain name does not match hostname regexp - please check",
 							"Warning", JOptionPane.WARNING_MESSAGE);
 		} else if (!isMultiComponentHostname(newDomainDnsNameTextField
 				.getText())) {
 			JOptionPane
 					.showMessageDialog(
-							null,
+							burpWindow,
 							"This seems to be a single-component DNS name - this isn't valid for Windows domains but might be valid for other Kerberos realms",
 							"Warning", JOptionPane.WARNING_MESSAGE);
 		}
@@ -3083,13 +3095,13 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 			if (!newKdcTextField.getText().isEmpty()) {
 				JOptionPane
 						.showMessageDialog(
-								null,
+								burpWindow,
 								"KDC hostname does not match hostname regexp - please check",
 								"Warning", JOptionPane.WARNING_MESSAGE);
 			} else {
 				JOptionPane
 						.showMessageDialog(
-								null,
+								burpWindow,
 								"You will need to also set the KDC Host before authentication will work.\n\nMaybe try the Auto button.",
 								"Warning", JOptionPane.WARNING_MESSAGE);
 			}
@@ -3140,7 +3152,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 		
 		final JComponent[] inputs = new JComponent[] { new JLabel("Specify a hostname"), new JLabel( "You can use wildcards (* matches zero or more characters, ? matches any character except a dot)"),
 				hostnameTextField};
-		int result = JOptionPane.showConfirmDialog(null, inputs, input.length() == 0 ? "Add host" : "Edit host", JOptionPane.OK_CANCEL_OPTION,
+		int result = JOptionPane.showConfirmDialog(burpWindow, inputs, input.length() == 0 ? "Add host" : "Edit host", JOptionPane.OK_CANCEL_OPTION,
 						JOptionPane.PLAIN_MESSAGE);
 		
 		if( result == JOptionPane.OK_OPTION)
@@ -3161,7 +3173,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 		newPasswordField.setText(password);
 		final JComponent[] inputs = new JComponent[] { new JLabel("Username "),
 				newUsernameTextField, new JLabel("Password "), newPasswordField, };
-		JOptionPane.showMessageDialog(null, inputs, "Change credentials",
+		JOptionPane.showMessageDialog(burpWindow, inputs, "Change credentials",
 				JOptionPane.PLAIN_MESSAGE);
 
 		if (newUsernameTextField.getText().contains("\\")
@@ -3169,7 +3181,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 				|| newUsernameTextField.getText().contains("@")) {
 			JOptionPane
 					.showMessageDialog(
-							null,
+							burpWindow,
 							"Username shouldn't contain slash, backslash or '@' - just a plain username is required",
 							"Warning", JOptionPane.WARNING_MESSAGE);
 		}
@@ -3194,7 +3206,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 	private void testCredentials() {
 		
 		if (usernameTextField.getText().isEmpty()) {
-			JOptionPane.showMessageDialog(null, "Username not set yet",
+			JOptionPane.showMessageDialog(burpWindow, "Username not set yet",
 					"Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -3202,7 +3214,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 		if (!(domainStatusTextField.getText().equals(kdcTestSuccessString))) {
 			int n = JOptionPane
 					.showConfirmDialog(
-							null,
+							burpWindow,
 							"You haven't successfully tested the domain settings yet, do you want to continue without doing so?\nIf the KDC can't be found, this command will hang Burp for quite a while (around 90 seconds).",
 							"Proceed?", JOptionPane.YES_NO_OPTION);
 
@@ -3227,7 +3239,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 					+ " ("
 					+ (forwardable ? forwardableTgtString
 							: notForwardableTgtString) + ")");
-			JOptionPane.showMessageDialog(null, credentialsTestSuccessString
+			JOptionPane.showMessageDialog(burpWindow, credentialsTestSuccessString
 					+ "\n\n("
 					+ (forwardable ? forwardableTgtString
 							: notForwardableTgtString) + ")", "Success",
@@ -3239,7 +3251,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 						.setText("Failed to acquire TGT - username appears to be invalid");
 				JOptionPane
 						.showMessageDialog(
-								null,
+								burpWindow,
 								"Failed to acquire TGT - username appears to be invalid.",
 								"Failure", JOptionPane.ERROR_MESSAGE);
 				log(1, "Error when testing credentials: " + e.getMessage());				
@@ -3249,7 +3261,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 						.setText("Failed to acquire TGT - password appears to be invalid");
 				JOptionPane
 						.showMessageDialog(
-								null,
+								burpWindow,
 								"Failed to acquire TGT - password appears to be invalid.\n\nBe careful not to lock out the account with more tests.",
 								"Failure", JOptionPane.ERROR_MESSAGE);
 				log(1, "Error when testing credentials: " + e.getMessage());
@@ -3261,7 +3273,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 				{
 					JOptionPane
 					.showMessageDialog(
-							null,
+							burpWindow,
 							"Failed to acquire TGT - encryption algorithm not supported by KDC.\n\nThis is unexpected, as you appear to have the JCE Unlimited Strength Jurisdiction Policy installed.",
 							"Failure", JOptionPane.ERROR_MESSAGE);
 				}
@@ -3269,7 +3281,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 				{
 					JOptionPane
 					.showMessageDialog(
-							null,
+							burpWindow,
 							"Failed to acquire TGT - encryption algorithm not supported by KDC.\n\nThis is likely to be because you do not have the JCE Unlimited Strength Jurisdiction Policy installed.\n\nSee http://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html#importlimits\n\nAlso note that newer versions of Burp seem to have a workaround for this.",
 							"Failure", JOptionPane.ERROR_MESSAGE);
 				}
@@ -3277,7 +3289,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 			} else {
 				credentialsStatusTextField.setText("Failed to acquire TGT: "
 						+ e.getMessage());
-				JOptionPane.showMessageDialog(null, "Failed to acquire TGT: "
+				JOptionPane.showMessageDialog(burpWindow, "Failed to acquire TGT: "
 						+ e.getMessage(), "Failure", JOptionPane.ERROR_MESSAGE);
 				log(1,
 						"Unexpected error when testing credentials: "
@@ -3289,13 +3301,13 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 
 	private void pingKDC() {
 		if (domainDnsNameTextField.getText().isEmpty()) {
-			JOptionPane.showMessageDialog(null, "Domain DNS name not set yet",
+			JOptionPane.showMessageDialog(burpWindow, "Domain DNS name not set yet",
 					"Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
 		if (kdcTextField.getText().isEmpty()) {
-			JOptionPane.showMessageDialog(null, "KDC hostname not set yet",
+			JOptionPane.showMessageDialog(burpWindow, "KDC hostname not set yet",
 					"Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -3306,14 +3318,14 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 			client.close();
 		} catch (UnknownHostException e) {
 			domainStatusTextField.setText("KDC hostname couldn't be resolved");
-			JOptionPane.showMessageDialog(null,
+			JOptionPane.showMessageDialog(burpWindow,
 					"Couldn't resolve KDC hostname:" + kdcHost, "Failure",
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		} catch (SocketTimeoutException e) {
 			domainStatusTextField
 					.setText("Couldn't connect to port 88 (Kerberos) on KDC - socket timed out");
-			JOptionPane.showMessageDialog(null,
+			JOptionPane.showMessageDialog(burpWindow,
 					"Couldn't connect to port 88 (Kerberos) on KDC:" + kdcHost
 							+ ". Socket timed out - check hostname?",
 					"Failure", JOptionPane.ERROR_MESSAGE);
@@ -3322,7 +3334,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 			domainStatusTextField
 					.setText("Failed to connect to port 88 on KDC");
 			JOptionPane.showMessageDialog(
-					null,
+					burpWindow,
 					"Failed to connect to port 88 on " + kdcHost + ": "
 							+ e.getMessage(), "Failure",
 					JOptionPane.ERROR_MESSAGE);
@@ -3343,14 +3355,14 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 			if (e.getMessage().startsWith(
 					"Client not found in Kerberos database")) {
 				domainStatusTextField.setText(kdcTestSuccessString);
-				JOptionPane.showMessageDialog(null, kdcTestSuccessString,
+				JOptionPane.showMessageDialog(burpWindow, kdcTestSuccessString,
 						"Success", JOptionPane.INFORMATION_MESSAGE);
 			} else if (e.getMessage().contains("(68)")) {
 				domainStatusTextField
 						.setText("Failed to contact Kerberos service - error code 68 suggests that KDC is valid but domain DNS name is wrong");
 				JOptionPane
 						.showMessageDialog(
-								null,
+								burpWindow,
 								"Failed to contact Kerberos service - error code 68 suggests that KDC is valid but domain DNS name is wrong",
 								"Failure", JOptionPane.ERROR_MESSAGE);
 			} 
@@ -3358,7 +3370,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 				domainStatusTextField
 						.setText("Connected to port 88, but failed to contact Kerberos service: "
 								+ e.getMessage());
-				JOptionPane.showMessageDialog(null,
+				JOptionPane.showMessageDialog(burpWindow,
 						"Connected to port 88, but failed to contact Kerberos service: "
 								+ e.getMessage(), "Failure",
 						JOptionPane.ERROR_MESSAGE);
@@ -3378,7 +3390,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 
 	private void kdcAuto() {
 		if (domainDnsName.isEmpty()) {
-			JOptionPane.showMessageDialog(null,
+			JOptionPane.showMessageDialog(burpWindow,
 					"Have to set the domain DNS name first", "Failure",
 					JOptionPane.ERROR_MESSAGE);
 			return;
@@ -3416,7 +3428,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 								"Couldn't find any suitable DNS SRV records - is (one of) your DNS server(s) in the domain?",
 								"Failure", JOptionPane.ERROR_MESSAGE);
 			} else {
-				JOptionPane.showMessageDialog(null,
+				JOptionPane.showMessageDialog(burpWindow,
 						"Failure doing DNS SRV lookup", "Failure",
 						JOptionPane.ERROR_MESSAGE);
 				log(1,
@@ -3428,7 +3440,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 		}
 
 		if (results.size() == 0) {
-			JOptionPane.showMessageDialog(null, "No DNS entries for KDC found",
+			JOptionPane.showMessageDialog(burpWindow, "No DNS entries for KDC found",
 					"Failure", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -3442,7 +3454,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 			for (int ii = 0; ii < results.size(); ii++) {
 				possibilities[ii] = results.get(ii);
 			}
-			selectedValue = (String) JOptionPane.showInputDialog(null,
+			selectedValue = (String) JOptionPane.showInputDialog(burpWindow,
 					"Multiple KDCs were found", "Select KDC",
 					JOptionPane.PLAIN_MESSAGE, null, possibilities,
 					results.get(0));
@@ -3466,7 +3478,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab,
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			JOptionPane.showMessageDialog(null, message, "Help",
+			JOptionPane.showMessageDialog(burpWindow, message, "Help",
 					JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
