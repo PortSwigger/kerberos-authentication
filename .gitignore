@@ -2,3 +2,12 @@
 .recommenders
 .gradle/
 build/
+
+# Eclipse IDE files
+.classpath
+.project
+.settings/
+*.jardesc
+
+# JAR artifacts
+*.jar
