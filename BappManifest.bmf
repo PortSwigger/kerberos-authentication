@@ -9,5 +9,5 @@ ProOnly: False
 Author: Richard Turnbull, NCC Group
 ShortDescription: Adds support for performing Kerberos authentication.
 EntryPoint: build/libs/kerberos-authentication-all.jar
-BuildCommand: gradle fatJar
+BuildCommand: ./gradlew fatJar
 SupportedProducts: Pro, Community
